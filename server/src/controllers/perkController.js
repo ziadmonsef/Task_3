@@ -134,5 +134,5 @@ export async function deletePerk(req, res, next) {
     const doc = await Perk.findByIdAndDelete(req.params.id);
     if (!doc) return res.status(404).json({ message: 'Perk not found' });
     res.json({ ok: true });
-  } catch (err) { next(err); }
+  } catch (err) { next(err); }
 }

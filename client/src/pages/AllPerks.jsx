@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 
@@ -21,14 +21,33 @@ export default function AllPerks() {
   
   const [error, setError] = useState('')
 
+  // Ref to track if initial load has completed
+  const hasInitialLoad = useRef(false)
+
   // ==================== SIDE EFFECTS WITH useEffect HOOK ====================
 
- /*
- TODO: HOOKS TO IMPLEMENT
- * useEffect Hook #1: Initial Data Loading
- * useEffect Hook #2: Auto-search on Input Change
+  // useEffect Hook #1: Initial Data Loading
+  useEffect(() => {
+    loadAllPerks().finally(() => {
+      // Mark initial load as complete whether it succeeds or fails
+      // This allows auto-search to work even if initial load fails
+      hasInitialLoad.current = true
+    })
+  }, []) // Empty dependency array means this runs once on mount
 
-*/
+  // useEffect Hook #2: Auto-search on Input Change (debounced)
+  useEffect(() => {
+    // Skip auto-search on initial mount (before first load completes)
+    if (!hasInitialLoad.current) return
+    
+    // Debounce the search to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      loadAllPerks()
+    }, 300) // Wait 300ms after user stops typing
+
+    // Cleanup function to cancel the timeout if dependencies change
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, merchantFilter]) // Re-run when search or filter changes
 
   
   useEffect(() => {
@@ -105,11 +124,6 @@ export default function AllPerks() {
   
   
   return (
-    /*
-    TODO: HTML INPUT HANDLERS
- * Update state when user types in search box
- * update state when user selects filter
-    */
     <div className="max-w-6xl mx-auto space-y-6">
       
       {/* Page Title */}
@@ -136,7 +150,8 @@ export default function AllPerks() {
                 type="text"
                 className="input"
                 placeholder="Enter perk name..."
-                
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
               <p className="text-xs text-zinc-500 mt-1">
                 Auto-searches as you type, or press Enter / click Search
@@ -151,7 +166,8 @@ export default function AllPerks() {
               </label>
               <select
                 className="input"
-                
+                value={merchantFilter}
+                onChange={(e) => setMerchantFilter(e.target.value)}
               >
                 <option value="">All Merchants</option>
                 
@@ -217,7 +233,7 @@ export default function AllPerks() {
           
           <Link
             key={perk._id}
-           
+            to={`/perks/${perk._id}/view`}
             className="card hover:shadow-lg transition-shadow cursor-pointer"
           >
             {/* Perk Title */}
@@ -286,7 +302,6 @@ export default function AllPerks() {
           </div>
         )}
       </div>
-    </div>
-  )
+    </div>
+  )
 }
-
